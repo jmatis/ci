@@ -1,4 +1,4 @@
-
+version: 2
 updates:
   # Semgrep image in semgrep/Dockerfile: Dependabot opens a pull request bumping tag + digest.
   - package-ecosystem: docker
