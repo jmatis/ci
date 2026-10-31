@@ -5,6 +5,11 @@ name: semgrep
 
 on:
   workflow_call:
+    inputs:
+      ci-ref:
+        description: Branch of jmatis/ci to build the scanner image from (ci's own tests use the PR branch)
+        type: string
+        default: main
 
 permissions:
   contents: read
@@ -23,8 +28,10 @@ jobs:
           git checkout -q FETCH_HEAD
 
       - name: Semgrep
+        env:
+          CI_REF: ${{ inputs.ci-ref }}
         run: |
-          image=$(docker build -q "https://github.com/jmatis/ci.git#main:semgrep")
+          image=$(docker build -q "https://github.com/jmatis/ci.git#${CI_REF}:semgrep")
           docker run --rm -v "$PWD:/src:ro" -w /src "$image" \
             semgrep scan --metrics=off --error \
               --config p/default --config p/typescript --config p/nodejs --config p/secrets .

@@ -1,0 +1,34 @@
+# Reusable OSV-Scanner scan of lockfiles against the osv.dev vulnerability database. Fails on any finding.
+# Call it with: uses: jmatis/ci/.github/workflows/osv-scanner.yml@main
+name: osv-scanner
+
+on:
+  workflow_call:
+    inputs:
+      ci-ref:
+        description: Branch of jmatis/ci to build the scanner image from (ci's own tests use the PR branch)
+        type: string
+        default: main
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Fetch the commit
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          git fetch -q --depth 1 "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$GITHUB_SHA"
+          git checkout -q FETCH_HEAD
+
+      - name: OSV-Scanner
+        env:
+          CI_REF: ${{ inputs.ci-ref }}
+        run: |
+          image=$(docker build -q "https://github.com/jmatis/ci.git#${CI_REF}:osv-scanner")
+          docker run --rm -v "$PWD:/src:ro" "$image" scan source -r /src

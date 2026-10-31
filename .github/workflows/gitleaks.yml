@@ -1,0 +1,37 @@
+# Reusable Gitleaks scan of the full git history for committed secrets. Fails on any finding.
+# Call it with: uses: jmatis/ci/.github/workflows/gitleaks.yml@main
+name: gitleaks
+
+on:
+  workflow_call:
+    inputs:
+      ci-ref:
+        description: Branch of jmatis/ci to build the scanner image from (ci's own tests use the PR branch)
+        type: string
+        default: main
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Fetch the commit with its full history
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          git fetch -q "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$GITHUB_SHA"
+          git checkout -q FETCH_HEAD
+
+      - name: Gitleaks
+        env:
+          CI_REF: ${{ inputs.ci-ref }}
+        run: |
+          image=$(docker build -q "https://github.com/jmatis/ci.git#${CI_REF}:gitleaks")
+          # safe.directory: the checkout is owned by the runner user, not the container's
+          docker run --rm -v "$PWD:/src:ro" \
+            -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
+            "$image" git --no-banner --redact --exit-code 1 /src

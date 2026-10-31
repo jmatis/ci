@@ -1,0 +1,31 @@
+# Runs every scanner against this repo, using the scanner versions from the PR's own branch,
+# so Dependabot's version bumps are tested before you merge them.
+name: test
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  semgrep:
+    uses: ./.github/workflows/semgrep.yml
+    with:
+      ci-ref: ${{ github.head_ref || github.ref_name }}
+  trivy:
+    uses: ./.github/workflows/trivy.yml
+    with:
+      ci-ref: ${{ github.head_ref || github.ref_name }}
+  osv-scanner:
+    uses: ./.github/workflows/osv-scanner.yml
+    with:
+      ci-ref: ${{ github.head_ref || github.ref_name }}
+  gitleaks:
+    uses: ./.github/workflows/gitleaks.yml
+    with:
+      ci-ref: ${{ github.head_ref || github.ref_name }}
+  socket:
+    uses: ./.github/workflows/socket.yml
+    with:
+      ci-ref: ${{ github.head_ref || github.ref_name }}
+    secrets:
+      SOCKET_CLI_API_TOKEN: ${{ secrets.SOCKET_CLI_API_TOKEN }}

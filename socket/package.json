@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "description": "Socket CLI version used by .github/workflows/socket.yml. Dependabot keeps it current.",
+  "dependencies": {
+    "socket": "1.10.1"
+  }
+}

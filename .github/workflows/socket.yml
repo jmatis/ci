@@ -1,0 +1,44 @@
+# Reusable Socket.dev scan: uploads the dependency manifests (not the source code) to your Socket org
+# and fails when they break your Socket policy (malware, typosquats, risky install scripts, ...).
+# Call it with:
+#   uses: jmatis/ci/.github/workflows/socket.yml@main
+#   secrets:
+#     SOCKET_CLI_API_TOKEN: ${{ secrets.SOCKET_CLI_API_TOKEN }}
+name: socket
+
+on:
+  workflow_call:
+    inputs:
+      ci-ref:
+        description: Branch of jmatis/ci to build the scanner image from (ci's own tests use the PR branch)
+        type: string
+        default: main
+    secrets:
+      SOCKET_CLI_API_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Fetch the commit
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          git fetch -q --depth 1 "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$GITHUB_SHA"
+          git checkout -q FETCH_HEAD
+
+      - name: Socket
+        env:
+          CI_REF: ${{ inputs.ci-ref }}
+          SOCKET_CLI_API_TOKEN: ${{ secrets.SOCKET_CLI_API_TOKEN }}
+        run: |
+          image=$(docker build -q "https://github.com/jmatis/ci.git#${CI_REF}:socket")
+          docker run --rm -v "$PWD:/src" -w /src -e SOCKET_CLI_API_TOKEN "$image" \
+            socket scan create --report --no-interactive \
+              --repo "${GITHUB_REPOSITORY#*/}" --branch "$GITHUB_REF_NAME" --commit-hash "$GITHUB_SHA" .

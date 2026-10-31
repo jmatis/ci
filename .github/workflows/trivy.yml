@@ -1,0 +1,36 @@
+# Reusable Trivy scan: vulnerable dependencies, secrets and misconfigurations. Fails on any finding.
+# Call it with: uses: jmatis/ci/.github/workflows/trivy.yml@main
+name: trivy
+
+on:
+  workflow_call:
+    inputs:
+      ci-ref:
+        description: Branch of jmatis/ci to build the scanner image from (ci's own tests use the PR branch)
+        type: string
+        default: main
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Fetch the commit
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          git fetch -q --depth 1 "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$GITHUB_SHA"
+          git checkout -q FETCH_HEAD
+
+      - name: Trivy
+        env:
+          CI_REF: ${{ inputs.ci-ref }}
+        run: |
+          image=$(docker build -q "https://github.com/jmatis/ci.git#${CI_REF}:trivy")
+          # Run from the repo root so the repo's own .trivyignore applies
+          docker run --rm -v "$PWD:/src:ro" -w /src "$image" \
+            fs --no-progress --exit-code 1 --scanners vuln,secret,misconfig .

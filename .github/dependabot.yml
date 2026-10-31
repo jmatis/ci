@@ -1,8 +1,25 @@
 version: 2
 updates:
-  # Semgrep image in semgrep/Dockerfile: Dependabot opens a pull request bumping tag + digest.
+  # Scanner images in each <scanner>/Dockerfile: Dependabot opens a pull request bumping tag + digest.
   - package-ecosystem: docker
-    directory: /semgrep
+    directories:
+      - /semgrep
+      - /trivy
+      - /osv-scanner
+      - /gitleaks
+      - /socket
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    ignore:
+      # socket/Dockerfile's Node base image: stay on Node 22, take only its minor/patch updates
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
+
+  # Socket CLI version in socket/package.json
+  - package-ecosystem: npm
+    directory: /socket
     schedule:
       interval: weekly
     cooldown:

@@ -1,0 +1,4 @@
+# Scanner wrapper images: run once, on a throwaway runner, against a read-only mount.
+# Root inside them and no HEALTHCHECK are not a risk there.
+DS-0002
+DS-0026

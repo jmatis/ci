@@ -1,0 +1,6 @@
+# zod 3.x comes in only through the Socket CLI (socket/package.json) and has no 3.x fix.
+# The CLI only validates its own config, not untrusted input. Revisit when socket moves to zod 4.
+[[IgnoredVulns]]
+id = "GHSA-mrhx-c7xc-m3w5"
+ignoreUntil = 2027-01-31
+reason = "zod 3.x via Socket CLI only; no 3.x fix"
