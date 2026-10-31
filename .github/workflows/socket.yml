@@ -13,6 +13,10 @@ on:
         description: Branch of jmatis/ci to build the scanner image from (ci's own tests use the PR branch)
         type: string
         default: main
+      socket-org:
+        description: Socket organization slug (from the dashboard URL socket.dev/dashboard/org/<slug>)
+        type: string
+        default: nonamenoorg
     secrets:
       SOCKET_CLI_API_TOKEN:
         required: true
@@ -36,9 +40,10 @@ jobs:
       - name: Socket
         env:
           CI_REF: ${{ inputs.ci-ref }}
+          SOCKET_ORG: ${{ inputs.socket-org }}
           SOCKET_CLI_API_TOKEN: ${{ secrets.SOCKET_CLI_API_TOKEN }}
         run: |
           image=$(docker build -q "https://github.com/jmatis/ci.git#${CI_REF}:socket")
           docker run --rm -v "$PWD:/src" -w /src -e SOCKET_CLI_API_TOKEN "$image" \
-            socket scan create --report --no-interactive \
+            socket scan create --report --no-interactive --org "$SOCKET_ORG" \
               --repo "${GITHUB_REPOSITORY#*/}" --branch "$GITHUB_REF_NAME" --commit-hash "$GITHUB_SHA" .
