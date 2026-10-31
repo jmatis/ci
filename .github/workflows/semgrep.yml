@@ -1,0 +1,30 @@
+# Reusable open-source Semgrep scan. Fails (and GitHub emails you) when it finds anything.
+# Call it with: uses: jmatis/ci/.github/workflows/semgrep.yml@main
+# No third-party actions: plain git on the runner + a digest-pinned Semgrep image.
+name: semgrep
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Fetch the commit
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          git fetch -q --depth 1 "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$GITHUB_SHA"
+          git checkout -q FETCH_HEAD
+
+      - name: Semgrep
+        run: |
+          docker run --rm -v "$PWD:/src:ro" -w /src \
+            docker.io/semgrep/semgrep:1.182.0@sha256:50440fe8ec1dcc2fc09a0cab0e527b66b1e0a983f2cfc1219b9c34e2f7b5567c \
+            semgrep scan --metrics=off --error \
+              --config p/default --config p/typescript --config p/nodejs --config p/secrets .
