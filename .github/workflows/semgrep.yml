@@ -1,6 +1,6 @@
 # Reusable open-source Semgrep scan. Fails (and GitHub emails you) when it finds anything.
 # Call it with: uses: jmatis/ci/.github/workflows/semgrep.yml@main
-# No third-party actions: plain git on the runner + a digest-pinned Semgrep image.
+# No third-party actions: plain git on the runner + the digest-pinned Semgrep image in semgrep/Dockerfile.
 name: semgrep
 
 on:
@@ -24,7 +24,7 @@ jobs:
 
       - name: Semgrep
         run: |
-          docker run --rm -v "$PWD:/src:ro" -w /src \
-            docker.io/semgrep/semgrep:1.182.0@sha256:50440fe8ec1dcc2fc09a0cab0e527b66b1e0a983f2cfc1219b9c34e2f7b5567c \
+          image=$(docker build -q "https://github.com/jmatis/ci.git#main:semgrep")
+          docker run --rm -v "$PWD:/src:ro" -w /src "$image" \
             semgrep scan --metrics=off --error \
               --config p/default --config p/typescript --config p/nodejs --config p/secrets .
