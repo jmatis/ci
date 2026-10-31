@@ -14,7 +14,7 @@ updates:
       default-days: 7
     ignore:
       # socket/Dockerfile's Node base image: stay on Node 22, take only its minor/patch updates
-      - dependency-name: node
+      - dependency-name: library/node # Docker Hub official images are named library/<name>
         update-types: ["version-update:semver-major"]
 
   # Socket CLI version in socket/package.json
