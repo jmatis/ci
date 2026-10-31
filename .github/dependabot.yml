@@ -8,6 +8,7 @@ updates:
       - /osv-scanner
       - /gitleaks
       - /socket
+      - /docs
     schedule:
       interval: weekly
     cooldown:
