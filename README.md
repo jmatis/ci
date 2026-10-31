@@ -13,6 +13,12 @@ what the scanner is for, how it works and how to handle false positives.
 | [`gitleaks.yml`](gitleaks/README.md) | Secrets anywhere in the git history | any finding (repo `.gitleaksignore` applies) |
 | [`socket.yml`](socket/README.md) | Malicious or risky npm packages | your Socket policy; needs the `SOCKET_CLI_API_TOKEN` secret |
 
+Not a scanner, so not part of `scan.yml` or `test.yml` (this repo has no docs of its own to check):
+
+| Workflow | Checks | Fails on |
+|---|---|---|
+| [`docs.yml`](docs/README.md) | The committed API docs match the code | `npm run docs` changes anything in `docs/api` |
+
 ## Using all of them
 
 Put this in the repo to scan as `.github/workflows/scan.yml`, and add the Socket token secret

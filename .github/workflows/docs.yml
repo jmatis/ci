@@ -1,0 +1,53 @@
+# Reusable docs check: regenerates the repo's API docs and fails when the committed copy is out of date.
+# Call it with: uses: jmatis/ci/.github/workflows/docs.yml@main
+# The repo needs a `docs` npm script (e.g. TypeDoc) that writes into the `path` folder.
+name: docs
+
+on:
+  workflow_call:
+    inputs:
+      ci-ref:
+        description: Branch of jmatis/ci to build the Node image from
+        type: string
+        default: main
+      path:
+        description: Folder the `docs` script writes, committed in the repo
+        type: string
+        default: docs/api
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Fetch the commit
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          git fetch -q --depth 1 "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$GITHUB_SHA"
+          git checkout -q FETCH_HEAD
+
+      - name: Regenerate the docs
+        env:
+          CI_REF: ${{ inputs.ci-ref }}
+        run: |
+          image=$(docker build -q "https://github.com/jmatis/ci.git#${CI_REF}:docs")
+          docker run --rm -v "$PWD:/src" -w /src "$image" \
+            sh -c "npm ci --ignore-scripts --no-audit --no-fund && npm run docs"
+
+      - name: Compare with the committed docs
+        env:
+          DOCS_PATH: ${{ inputs.path }}
+        run: |
+          # status, not diff: also catches pages added or deleted by the regeneration
+          changes=$(git status --porcelain -- "$DOCS_PATH")
+          if [ -n "$changes" ]; then
+            echo "::error::$DOCS_PATH is out of date. Run 'npm run docs' and commit the result."
+            echo "$changes"
+            git diff -- "$DOCS_PATH" | head -100
+            exit 1
+          fi
