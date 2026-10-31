@@ -1,0 +1,9 @@
+
+updates:
+  # Semgrep image in semgrep/Dockerfile: Dependabot opens a pull request bumping tag + digest.
+  - package-ecosystem: docker
+    directory: /semgrep
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
